@@ -1,33 +1,54 @@
 import sys,os
 from socket import *
 
-def formRequestHeader(req_webpage_name):
-    httprequestheader = ("GET /" + req_webpage_name + " HTTP/1.1\r\n\r\n")
-    return httprequestheader
-
 def main():
+
 	try:
 		host = sys.argv[1]
 		port = sys.argv[2]
-		file = sys.argv[3]
+		mode = sys.argv[3]
+		username = sys.argv[4]
+		password = sys.argv[5]
+		file = sys.argv[6]
+
 	except:
 		print('Incomplete set of arguments')
 		sys.exit()
-
 
 	try:
 		client = socket(AF_INET, SOCK_STREAM)
 		client.connect((host, int(port)))
 		print ('Connected to ' + host + ':' + port + '\n')
-		request = ("GET /" + file + " HTTP/1.1\r\n\r\n")
-		client.send(formRequestHeader(file))
-		print("Request sent. Waiting for server's response\n")
 
 	except:
 		print('could not connect to the network')
 		sys.exit()
+			
+	if mode != 'register' and mode != 'auth':
+		print('Not a valid request \n')
+		sys.exit()
 
+	request = ("GET /" + file + " HTTP/1.1\r\n\r\n")
+	client.send(mode + ' ' + username + ' ' + password + ' ' + request)
+	print("Request sent. Waiting for server's response\n")
+	receive = client.recv(1024)
+	if receive == 'Yo' and mode == 'register':
+		auth_fl = 1
+		print('User successfully registered \n')
 
+	if receive == 'Yo' and mode == 'auth':
+		auth_fl = 1
+		print('User successfully logged in \n')
+
+	if receive == 'err1':
+		print('Username already available, retry using some other username \n')
+		sys.exit()
+
+	if receive == 'err2':
+		print('Incorrect username or password, log in failed \n')
+		sys.exit()
+
+	print("Request sent. Waiting for server's response\n")
 
 	try:
 		headers = ''
