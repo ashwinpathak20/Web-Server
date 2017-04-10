@@ -6,6 +6,7 @@ import threading
 SERVER_PORT = 8001
 packetSize = 1024
 FILE_LOCATION = os.path.dirname(os.path.abspath(__file__))
+limitRequest = 10
 #print FILE_LOCATION
 msgHome = ("<center><h1><center>HELLO FROM THE OTHER SIDE</center>")
 msgError = ("<center><h1>404 ERROR<h1><br>"
@@ -24,7 +25,7 @@ headerError = ("HTTP/1.1 404 Not Found\r\n"
 
 def handleConnection(clientSocket):
     request = clientSocket.recv(packetSize)
-    print request
+    #print request
     if not request :
         return
     r = request.split()
@@ -33,6 +34,7 @@ def handleConnection(clientSocket):
     print requestFile
     if requestFile == '/' :
         clientSocket.send(headermsg + msgHome)
+        clientSocket.close()
         return
     try:
         #print FILE_LOCATION
@@ -71,11 +73,30 @@ def createServer():
     serverSocket.listen(10)
 
     connList = []
+    clientList = []
 
     print "Server is up and listening"
     try :
         while True:
             (clientSocket, address) = serverSocket.accept()
+            a = (str(address[0]))
+            temp = 0
+            count = 0
+            for i in range(len(clientList)) :
+                if a == clientList[i][0]:
+                    temp = 1
+                    #print type(addr[1])
+                    if int(clientList[i][1]) < limitRequest :
+                         x = clientList[i][1] + 1
+                         clientList[i] = (clientList[i][0],x,clientList[i][2])
+                    count = clientList[i][1]
+                    break
+            if temp == 0 :
+                clientList.append((a,0,0))
+            print clientList,count
+            if count >= limitRequest :
+                print "Over Requesting! Fuck Off"
+                continue
             print "Address : " + str(address)
             name = "ClientConnection-" + str(len(connList))
             newconnection = myThread(len(connList), name, clientSocket)
