@@ -6,7 +6,7 @@ SERVER_PORT = 8000
 packetSize = 1024
 FILE_LOCATION = os.path.dirname(os.path.abspath(__file__))
 #print FILE_LOCATION
-msg = ("<center><h1><center>HELLO FROM THE OTHER SIDE</center>")
+msgHome = ("<center><h1><center>HELLO FROM THE OTHER SIDE</center>")
 msgError = ("<center><h1>404 ERROR<h1><br>"
             "File Requested Not Found<br>"
             "Check FileName</center> ")
@@ -40,7 +40,7 @@ def createServer():
             requestFile = r[1]
             print requestFile
             if requestFile == '/' :
-                clientSocket.send(headermsg + msg)
+                clientSocket.send(headermsg + msgHome)
                 continue
             try:
                 print FILE_LOCATION
