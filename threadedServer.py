@@ -3,10 +3,11 @@ import os
 import datetime
 import threading
 
-SERVER_PORT = 8001
+SERVER_PORT = 8000
 packetSize = 1024
 FILE_LOCATION = os.path.dirname(os.path.abspath(__file__))
-limitRequest = 10
+limitRequest = 1000000
+ServerAddr  = ''
 #print FILE_LOCATION
 msgHome = ("<center><h1><center>HELLO FROM THE OTHER SIDE</center>")
 msgError = ("<center><h1>404 ERROR<h1><br>"
@@ -29,7 +30,7 @@ def handleConnection(clientSocket):
     if not request :
         return
     r = request.split()
-    #requestType = r[0]
+    requestType = r[0]
     requestFile = r[1]
     print requestFile
     if requestFile == '/' :
@@ -38,16 +39,45 @@ def handleConnection(clientSocket):
         return
     try:
         #print FILE_LOCATION
-        print os.path.join(FILE_LOCATION,requestFile)
-        fileData = open(os.path.join(FILE_LOCATION,requestFile[1:]), 'r+')
-        clientSocket.send(headermsg)
-        for block in iter(lambda: fileData.read(packetSize), ""):
-            clientSocket.send(block)
-        print "Done Sending"
-        fileData.close()
+        if requestType == 'GET' :
+            print os.path.join(FILE_LOCATION,requestFile)
+            fileData = open(os.path.join(FILE_LOCATION,requestFile[1:]), 'r+')
+            clientSocket.send(headermsg)
+            for block in iter(lambda: fileData.read(packetSize), ""):
+                clientSocket.send(block)
+            print "Done Sending"
+            fileData.close()
+        elif requestType == 'POST' :
+            lines = request.split('\n')
+            i = 0
+            for line in lines :
+                if 'boundary' in line :
+                    boundary = line.split('-')[-1]
+                if 'filename' in line :
+                    f = line.split('"')
+                    fileName = f[-2]
+                    lineNumber = i + 3
+                i += 1
+            newFile = open(fileName,'w+')
+            for i in range(lineNumber,len(lines)):
+                newFile.write(lines[i]+'\n')
+            while(1) :
+                request = clientSocket.recv(packetSize)
+                lines = request.split('\n')
+                flag = 0
+                for line in lines:
+                    if boundary in line :
+                        flag = 1
+                        break
+                    newFile.write(line+'\n')
+                if flag == 1:
+                    print "breaking"
+                    break
+            clientSocket.send(headermsg)
+            print "Done Recieveing!!"
     except IOError:
         print "error"
-        clientSocket.send(headermsg + msgError)
+        clientSocket.send(headerError + msgError)
     finally :
         clientSocket.close()
 
@@ -69,7 +99,7 @@ def createServer():
 
     serverSocket = socket(AF_INET, SOCK_STREAM)
     serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    serverSocket.bind(('10.1.37.153', SERVER_PORT))
+    serverSocket.bind((ServerAddr, SERVER_PORT))
     serverSocket.listen(10)
 
     connList = []
