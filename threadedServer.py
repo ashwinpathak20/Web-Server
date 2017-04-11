@@ -2,6 +2,7 @@ from socket import *
 import os
 import datetime
 import threading
+from time import sleep
 
 SERVER_PORT = 8000
 packetSize = 1024
@@ -53,27 +54,46 @@ def handleConnection(clientSocket):
             for line in lines :
                 if 'boundary' in line :
                     boundary = line.split('-')[-1]
+                    print boundary,type(boundary)
                 if 'filename' in line :
                     f = line.split('"')
                     fileName = f[-2]
                     lineNumber = i + 3
                 i += 1
             newFile = open(fileName,'w+')
+            new = []
+            te = 0
             for i in range(lineNumber,len(lines)):
-                newFile.write(lines[i]+'\n')
-            while(1) :
-                request = clientSocket.recv(packetSize)
-                lines = request.split('\n')
-                flag = 0
-                for line in lines:
-                    if boundary in line :
-                        flag = 1
-                        break
-                    newFile.write(line+'\n')
-                if flag == 1:
-                    print "breaking"
+                if '----------' in lines[i]:
+                    te = 1
                     break
-            clientSocket.send(headermsg)
+                new.append(lines[i])
+            request = ('\n').join(new)
+            newFile.write(request)
+            while(1) :
+                clientSocket.settimeout(2)
+                try:
+                    request = clientSocket.recv(packetSize)
+                    if te == 1:
+                        continue
+                    #print request
+                    if '----------' in request:
+                        r = request.split('\n')
+                        new = []
+                        for i in range(len(r)) :
+                            if '--------' in r[i]:
+                                break
+                            new.append(r[i])
+                        request = ('\n').join(new)
+                    newFile.write(request)
+                except :
+                    break
+            clientSocket.settimeout(2)
+            try:
+                request = clientSocket.recv(packetSize)
+            except:
+                print "Timeout"
+            clientSocket.send(headermsg+("<center> <h1>DONE SENDING </center>"))
             print "Done Recieveing!!"
     except IOError:
         print "error"
