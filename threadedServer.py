@@ -76,7 +76,7 @@ def handleConnection(clientSocket):
                     request = clientSocket.recv(packetSize)
                     if te == 1:
                         continue
-                    print request
+                    #print request
                     if '----------' in request:
                         r = request.split('\n')
                         new = []
@@ -88,7 +88,12 @@ def handleConnection(clientSocket):
                     newFile.write(request)
                 except :
                     break
-            clientSocket.send(headermsg)
+            clientSocket.settimeout(2)
+            try:
+                request = clientSocket.recv(packetSize)
+            except:
+                print "Timeout"
+            clientSocket.send(headermsg+("<center> <h1>DONE SENDING </center>"))
             print "Done Recieveing!!"
     except IOError:
         print "error"
