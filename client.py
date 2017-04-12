@@ -1,6 +1,9 @@
 import sys,os
 from socket import *
 
+usernames = ['ashwin','vidit','iiit']
+passwords = ['pathak','jain','123']
+
 def main():
 
 	try:
@@ -29,9 +32,29 @@ def main():
 		sys.exit()
 
 	request = ("GET /" + file + " HTTP/1.1\r\n\r\n")
-	client.send(mode + ' ' + username + ' ' + password + ' ' + request)
+	client.send(request + ' hi')
 	print("Request sent. Waiting for server's response\n")
-	receive = client.recv(1024)
+	receive = ''
+	flag = 0
+	for i in range(len(usernames)):
+		if usernames[i] == username and passwords[i] == password:
+			if mode == 'auth':
+				receive = 'Yo'
+				flag = 1
+				break
+		if usernames[i] == username:
+			if mode == 'register':
+				receive = 'err1'
+				flag = 1
+				break
+	if flag == 0:
+		if mode == 'auth':
+			receive = 'err2'
+		if mode == 'register':
+			receive = 'Yo'
+			usernames.append(username)
+			passwords.append(passwords)
+
 	if receive == 'Yo' and mode == 'register':
 		auth_fl = 1
 		print('User successfully registered \n')
@@ -41,7 +64,7 @@ def main():
 		print('User successfully logged in \n')
 
 	if receive == 'err1':
-		print('Username already available, retry using some other username \n')
+		print('Username already taken, retry using some other username \n')
 		sys.exit()
 
 	if receive == 'err2':

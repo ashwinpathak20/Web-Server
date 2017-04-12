@@ -2,6 +2,7 @@ from socket import *
 import os
 import datetime
 import threading
+import ssl
 from time import sleep
 
 SERVER_PORT = 8000
@@ -32,13 +33,12 @@ headerError = ("HTTP/1.1 404 Not Found\r\n"
 
 def handleConnection(clientSocket, auth, k):
     request = clientSocket.recv(packetSize)
+    #print request
     if not request :
         return
     r = request.split()
     requestType = r[0]
     requestFile = r[1]
-    if r[3] == 'hi':
-        auth = 0
     print requestFile
     if requestFile == '/' :
         clientSocket.send(headermsg + msgHome)
@@ -49,6 +49,7 @@ def handleConnection(clientSocket, auth, k):
         if requestType == 'POST' :
             lines = request.split('\n')
             i = 0
+            auth = 0
             if auth == 1:
                 logs = 0
                 for line in lines :
@@ -118,6 +119,7 @@ def handleConnection(clientSocket, auth, k):
                 print "Done Recieveing!!"
         if requestType == 'GET' :
             print store
+            auth = 0
             if auth == 1:
                 fileData = open(os.path.join(FILE_LOCATION,'ashwin.html'), 'r+')
             else:
@@ -153,6 +155,9 @@ class myThread (threading.Thread):
 def createServer():
 
     serverSocket = socket(AF_INET, SOCK_STREAM)
+    serverSocket = ssl.wrap_socket(serverSocket,server_side=True,
+                             certfile="cert.pem",
+                             keyfile="cert.pem")
     serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     serverSocket.bind((ServerAddr, SERVER_PORT))
     serverSocket.listen(10)
